@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DepartmentManagementMapper">
+
+	<!--表名 -->
+	<sql id="tableName">
+		PermissionService.SYS_DEPARTMENT
+	</sql>
+
+	<!-- 添加部门信息 -->
+	<insert id="insertDepartmentManagementInfo" parameterType="departmentInfo">
+		insert into
+			<include refid="tableName"></include>
+		(
+			DEPARTMENT_ID,DEPARTMENT_NAME,DEPARTMENT_PARENTID,DEPARTMENT_CREATTIME
+		) values (
+			#{departmentId},#{departmentName},#{departmentParentId},#{createDepartmentTime}
+		)
+	</insert>
+	
+	<!-- 修改部门信息 -->
+	<update id="updateDepartmentManagementInfo" parameterType="departmentInfo">
+		update
+			<include refid="tableName"></include>
+		set
+			DEPARTMENT_NAME=#{departmentName}
+		where 
+			DEPARTMENT_ID = #{departmentId}
+	</update>
+	
+	<!-- 删除部门信息 -->
+	<delete id="deleteDepartmentManagementInfo" parameterType="pageData">
+		delete from
+			<include refid="tableName"></include>
+		where
+			<if test="departmentIds!=null">
+				DEPARTMENT_ID in
+				<foreach collection="departmentIds" item="departmentId" separator="," open="(" close=")">
+		            #{departmentId}
+		        </foreach>
+			</if> 
+	</delete>
+	
+	<!--根据父ID查询当前父节点下面的子节点 -->
+	<select id="listSubDepartmentInfoByParentId" parameterType="String" resultType="departmentInfo">
+		select
+			DEPARTMENT_ID as departmentId,
+			DEPARTMENT_NAME as departmentName,
+			DEPARTMENT_PARENTID as departmentParentId,
+			DEPARTMENT_CREATTIME as createDepartmentTime
+		from
+			<include refid="tableName"></include>
+		where 
+			1=1 and DEPARTMENT_PARENTID = #{departmentParentId}
+			ORDER BY STR_TO_DATE(DEPARTMENT_CREATTIME,'%Y-%m-%d %H:%i:%s')
+	</select>
+	
+	<!-- 统计当前节点下面的子节点 -->
+	<select id="countSubDepartmentManagementInfo" parameterType="pageData" resultType="pageData">
+		select 
+			count(DEPARTMENT_ID) as subDepartmentInfoCount
+		from 
+			<include refid="tableName"></include>
+		where
+			1=1 and DEPARTMENT_PARENTID = #{departmentParentId}
+	</select>
+	
+	<!--(分页)查询部门信息 -->
+	<select id="listPageDepartmentManagementInfo" parameterType="page" resultType="departmentInfo">
+		select
+			DEPARTMENT_ID as departmentId,
+			DEPARTMENT_NAME as departmentName,
+			DEPARTMENT_PARENTID as departmentParentId,
+			DEPARTMENT_CREATTIME as createDepartmentTime
+		from
+			<include refid="tableName"></include>
+		where 
+			1=1
+			<if test="pageData.departmentParentId != null and pageData.departmentParentId != ''"></if>
+			and DEPARTMENT_PARENTID = #{pageData.departmentParentId}
+			ORDER BY STR_TO_DATE(DEPARTMENT_CREATTIME,'%Y-%m-%d %H:%i:%s')
+		<if test="pageSize!=0">
+			limit #{currentStartIndex},#{pageSize}
+		</if>
+	</select>
+	
+</mapper>
